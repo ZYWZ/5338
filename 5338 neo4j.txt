@@ -1,0 +1,78 @@
+//Create Post label
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS
+FROM "file:///5338/newPosts.csv" AS line
+CREATE(p:Post{
+Id:toInteger(line.Id),
+PostTypeId:toInteger(line.PostTypeId),
+ParentId:toInteger(line.ParentId),
+AcceptedAnswerId:toInteger(line.AcceptedAnswerId),
+CreationDate:toInteger(line.CreationDate),
+Score:toInteger(line.Score),
+ViewCount:toInteger(line.ViewCount),
+OwnerUserId:toInteger(line.OwnerUserId),
+Title:line.Title,
+Tags:line.Tags,
+AnswerCount:toInteger(line.AnswerCount),
+CommentCount:toInteger(line.CommentCount),
+FavoriteCount:toInteger(line.FavoriteCount),
+ClosedDate:toInteger(line.ClosedDate),
+OwnerDisplayName:line.OwnerDisplayName
+})
+
+//Split the tags
+MATCH (p:Post)
+SET p.Tags=split(p.Tags,',')
+
+//Create User Label
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS
+FROM "file:///5338/Users.csv" AS line2
+CREATE(u:User{
+Id:toInteger(line2.Id),
+Reputation:toInteger(line2.Reputation),
+CreationDate:toInteger(line2.CreationDate),
+DisplayName:line2.DisplayName,
+LastAccessDate:toInteger(line2.LastAccessDate),
+Location:line2.Location,
+Views:toInteger(line2.Views),
+UpVotes:toInteger(line2.UpVotes),
+DownVotes:toInteger(line2.DownVotes),
+AccountId:toInteger(line2.AccountId)
+})
+
+//Create Vote Label
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS 
+FROM "file:///5338/Votes.csv" AS line3
+CREATE(v:Vote{
+Id:toInteger(line3.Id),
+PostId:toInteger(line3.PostId),
+VoteTypeId:toInteger(line3.VoteTypeId),
+CreationDate:toInteger(line3.CreationDate),
+UserId:toInteger(line3.UserId),
+BountyAmount:toInteger(line3.BountyAmount)
+})
+
+//Create Tag Label
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS 
+FROM "file:///5338/Tags.csv" AS line4
+CREATE(t:Tag{
+Id:toInteger(line4.Id),
+TagName:line4.TagName,
+Count:toInteger(line4.Count),
+ExcerptPostId:toInteger(line4.ExcerptPostId),
+WikiPostId:toInteger(line4.WikiPostId)
+})
+
+//Create OWN relationship
+MATCH (p:Post),(u:User)
+WHERE p.OwnerUserId = u.Id
+CREATE (u)-[:OWN]->(p)
+
+//Create TAG relationship
+MATCH (p:Post)
+  UNWIND p.Tags as tag
+    MATCH (t:Tag{TagName: tag})
+    MERGE (p)-[:TAG]->(t)
