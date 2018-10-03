@@ -71,6 +71,11 @@ MATCH (p:Post),(u:User)
 WHERE p.OwnerUserId = u.Id
 CREATE (u)-[:OWN]->(p)
 
+//Create ANSWERED_BY relationship
+MATCH (p1:Post),(p2:Post)
+WHERE p2.ParentId=p1.Id
+CREATE (p1)-[a:ANSWERED_BY]->(p2)
+
 //Create TAG relationship
 MATCH (p:Post)
   UNWIND p.Tags as tag
