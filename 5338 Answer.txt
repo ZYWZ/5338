@@ -1,6 +1,14 @@
-SQ1: MATCH (p1:Post{Id:1})-[:OWN]-(u1:User) OPTIONAL MATCH (p1)-->(p2:Post) OPTIONAL MATCH (p2)-[:OWN]-(u2) RETURN p1,p2,u1,u2
+SQ1: 
+MATCH (p1:Post{Id:1})-[:OWN]-(u1:User) 
+OPTIONAL MATCH (p1)-->(p2:Post) 
+OPTIONAL MATCH (p2)-[:OWN]-(u2) with u1,u2 as U 
+RETURN distinct U.Id,U.CreationDate,U.DisplayName,U.UpVotes,U.DownVotes
 
-SQ2: MATCH (p:Post)-[:TAG]-(t:Tag{Id:8}) RETURN p.ViewCount ORDER BY p.ViewCount DESC LIMIT 1
+SQ2: 
+MATCH (p:Post)-[:TAG]-(t:Tag{Id:8}) 
+RETURN p.ViewCount 
+ORDER BY p.ViewCount DESC 
+LIMIT 1
 
 AQ2:
 MATCH (p1:Post)-[a:ANSWERED_BY]-(p2:Post)
@@ -12,3 +20,20 @@ UNWIND p1.Tags as Topic
 WITH Topic,p1,u1,u2
 RETURN DISTINCT Topic,(count(u1)+count(u2)) as User_Numbers
 ORDER BY User_Numbers DESC LIMIT 5
+
+AQ4:
+// Find out potential answerers
+MATCH (u:User)-[:GOOD_AT]-(t:Tag) RETURN u,t
+
+// Recommend unanswered posts to the user
+MATCH (p:Post)-[:TAG]-(t:Tag)
+WHERE not exists (p.AcceptedAnswerId) AND t.TagName="machine-learning"
+RETURN p ORDER BY p.CreationDate DESC LIMIT 5
+
+AQ6:
+MATCH (p1:Post)-[:OWN]-(u1:User{Id:4398}) 
+OPTIONAL MATCH (p1)-[:ANSWERED_BY]-(p2:Post) 
+OPTIONAL MATCH (u2:User)-[:OWN]-(p2) 
+RETURN u2,count(u2) as Coauthor_Count 
+ORDER BY Coauthor_Count DESC 
+LIMIT 5
