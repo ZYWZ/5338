@@ -27,7 +27,7 @@ SET p.Tags=split(p.Tags,',')
 //Create User Label
 USING PERIODIC COMMIT
 LOAD CSV WITH HEADERS
-FROM "file:///5338/Users.csv" AS line2
+FROM "file:///5338/newUsers.csv" AS line2
 CREATE(u:User{
 Id:toInteger(line2.Id),
 Reputation:toInteger(line2.Reputation),
@@ -44,7 +44,7 @@ AccountId:toInteger(line2.AccountId)
 //Create Vote Label
 USING PERIODIC COMMIT
 LOAD CSV WITH HEADERS 
-FROM "file:///5338/Votes.csv" AS line3
+FROM "file:///5338/newVotes.csv" AS line3
 CREATE(v:Vote{
 Id:toInteger(line3.Id),
 PostId:toInteger(line3.PostId),
@@ -81,3 +81,18 @@ MATCH (p:Post)
   UNWIND p.Tags as tag
     MATCH (t:Tag{TagName: tag})
     MERGE (p)-[:TAG]->(t)
+
+//Create ACCEPTED_ANSWER relationship
+MATCH (p1:Post)-[:ANSWERED_BY]-(p2:Post)
+WHERE p2.Id=p1.AcceptedAnswerId
+CREATE (p1)-[:ACCEPTED_ANSWER]->(p2)
+
+//Create GOOD_AT relationship
+MATCH (p1:Post)-[:ACCEPTED_ANSWER]->(p2:Post)
+OPTIONAL MATCH (p2:Post)-[:OWN]-(u:User)
+UNWIND p1.Tags as Tag
+WITH Tag, u, count(u) AS User_count
+WHERE User_count>4
+MATCH (t:Tag) where t.TagName=Tag
+CREATE (u)-[:GOOD_AT]->(t)
+
